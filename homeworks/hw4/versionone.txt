@@ -1,0 +1,37 @@
+library(readxl)
+library(arules)
+library(arulesViz)
+
+bread_basket <- read_excel("BreadBasket_DMS.xlsx")
+
+bread_basket <- bread_basket[!(bread_basket$Item=="NONE"),]
+
+
+num_transactions <- nrow(bread_basket)
+num_items <- length(unique(bread_basket$Item))
+
+
+avg_items_per_transaction <- mean(table(bread_basket$Transaction))
+
+cat("Number of transactions:", num_transactions, "\n")
+cat("Number of unique items:", num_items, "\n")
+cat("Average items per transaction:", avg_items_per_transaction, "\n")
+
+item_counts <- table(bread_basket$Item)
+top_items <- names(sort(item_counts, decreasing = TRUE)[1:10])
+cat("Top 10 most popular items:\n")
+cat(paste(top_items, collapse = "\n"))
+
+transactions <- split(bread_basket$Item, bread_basket$Transaction)
+transactions <- as(transactions, "transactions")
+
+rules <- apriori(transactions, parameter = list(support = 0.02, confidence = 0.5))
+
+rules_filtered <- subset(rules, !(rhs %in% "Coffee"))
+
+top_rules <- head(sort(rules_filtered, by = "lift"), 5)
+
+inspect(top_rules)
+
+summary(rules)
+summary(rules[1:5])
